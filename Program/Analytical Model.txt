@@ -1,0 +1,1445 @@
+##Server Restart
+	restart;
+	st := time[real]();
+	st2 := st;	
+
+##Definitions
+	definitions := proc () 
+		global 
+			testBaseSoln, compTrans, writeDataSwitch, i_analyticalNumPoints, j_analyticalNumPoints, i_analyticalMinControl, j_analyticalMinControl, i_analyticalMaxControl, j_analyticalMaxControl, 
+			advantageValue, advantageString, `invader_&beta;Adv`, `invader_&rho;Adv`, `invader_&gamma;Adv`, invader_dispAdv, tradeDispAdvantage, model_isMutantSwitch, plot_proportions, proportion_title, outputGIF, 
+			`&sigma;_min`, `&omega;_min`, `&lambda;_min`, `&rho;_min`, r_min, `&alpha;_min`, `&gamma;_min`, K_min, `&theta;_min`, p_min, `&zeta;_min`, D_min, Dv_min, Dt_min, `&eta;_min`, `&rho;Rep_min`, `&phi;_min`, `&kappa;_min`, `&xi;_min`, 
+			`&sigma;_max`, `&omega;_max`, `&lambda;_max`, `&rho;_max`, r_max, `&alpha;_max`, `&gamma;_max`, p_max, K_max, `&theta;_max`, `&zeta;_max`, D_max, Dt_max, Dv_max, `&eta;_max`, `&rho;Rep_max`, `&phi;_max`, `&kappa;_max`, `&xi;_max`, 
+			`&psi;_temp`, `&phi;_temp`, `&xi;_temp`, `&kappa;_temp`, `&eta;_&lambda;_temp`, `&sigma;_temp`, `&omega;_temp`, `&lambda;_r_temp`, `&lambda;_temp`, `my_&gamma;r_temp`, `my_&gamma;_temp`, `&rho;_r_temp`, `&rho;_i_temp`, `&alpha;_temp`, 
+			r_temp, K_temp, `&tau;_temp`, `&theta;_temp`, p_temp, `my_&zeta;_temp`, D_migrate_temp, D_V_temp, D_T_temp, b_V_temp, b_T_temp, 
+			tradeCSSTest, tradeCSSTest2d, tradeFixTitle, nonTradeC, localProp, `&zeta;_var`, `&theta;_var`, filenameInvaderType, stringParamControlType, `&eta;_&gamma;_temp`, P; 
+		
+		testBaseSoln := true;
+		compTrans := false;
+		writeDataSwitch := true;
+		
+		i_analyticalNumPoints := 51;
+		i_analyticalMinControl := 0;
+		i_analyticalMaxControl := 1;
+		
+		j_analyticalNumPoints := i_analyticalNumPoints;
+		j_analyticalMinControl := i_analyticalMinControl;
+		j_analyticalMaxControl := i_analyticalMaxControl;
+		
+		advantageValue := 1.25;
+		
+		advantageString := "_advantageLambda";
+		`invader_&beta;Adv` := advantageValue;
+		`invader_&gamma;Adv` := 1;
+		`invader_&rho;Adv` := 1;
+		invader_dispAdv := 1;
+		
+		`&lambda;_temp` := 0.8e-2;
+		`&rho;_r_temp` := 0.3e-2;
+		plot_proportions := 0;
+		proportion_title := "_proportionGIF";
+		outputGIF := 1;
+		`&sigma;_min` := 0;
+		`&sigma;_max` := 0.3e-2;
+		`&omega;_min` := 0.2e-2;
+		`&omega;_max` := 0.4e-2;
+		`&lambda;_min` := 0;
+		`&lambda;_max` := 0.32e-1;
+		`&rho;_min` := 0;
+		`&rho;_max` := 0.33e-1;
+		r_min := .1;
+		r_max := .3;
+		`&alpha;_min` := 0.6e-1;
+		`&alpha;_max` := r_max;
+		`&gamma;_min` := 0;
+		`&gamma;_max` := 0.16e-1;
+		K_min := 0;
+		K_max := 250;
+		`&theta;_min` := 0;
+		`&theta;_max` := 1;
+		p_min := 0;
+		p_max := 1;
+		`&zeta;_min` := 0;
+		`&zeta;_max` := 1;
+		D_min := 0;
+		D_max := 1;
+		Dv_min := 0;
+		Dv_max := 5000;
+		Dt_min := 0;
+		Dt_max := 60000;
+		`&eta;_min` := 1;
+		`&eta;_max` := 2;
+		`&rho;Rep_min` := 0;
+		`&rho;Rep_max` := 1;
+		`&phi;_min` := 0;
+		`&phi;_max` := 1;
+		`&kappa;_min` := 1;
+		`&kappa;_max` := 20;
+		`&xi;_min` := 1;
+		`&xi;_max` := 5;
+		
+		`&xi;_temp` := 2;
+		`&phi;_temp` := .1;
+		`&kappa;_temp` := 10;
+		`&eta;_&lambda;_temp` := `invader_&beta;Adv`;
+		`&eta;_&gamma;_temp` := `invader_&gamma;Adv`;
+		`&eta;_&rho;_temp` := `invader_&rho;Adv`;
+		`&sigma;_temp` := 0.3e-2;
+		`&omega;_temp` := 0.3e-2;
+		`&lambda;_r_temp` := `&lambda;_temp`/`&eta;_&lambda;_temp`;
+		`my_&gamma;_temp` := 0.4e-2;
+		`my_&gamma;r_temp` := `my_&gamma;_temp`/`&eta;_&gamma;_temp`;
+		`&rho;_i_temp` := `&rho;_r_temp`/`invader_&rho;Adv`;
+		`&alpha;_temp` := .12;
+		r_temp := .2;
+		`&tau;_temp` := 0;
+		`&theta;_temp` := 0.5e-1;
+		p_temp := .4;
+		`my_&zeta;_temp` := .5;
+		D_migrate_temp := 0.25e-1;
+		D_V_temp := 1000;
+		D_T_temp := 30000;
+		P_old := 50;
+		K_temp := r_temp*P_old/(r_temp-`&alpha;_temp`);
+		P := proc (alpha) options operator, arrow; (r_temp-alpha)*K_temp/r_temp end proc;
+		
+		tradeCSSTest := false;
+		tradeCSSTest2d := false;
+		nonTradeC := false;
+		
+		if `or`(paramControlType = 7, paramControlType = 9) and `not`(tradeCSSTest2d) and tradeCSSTest then 
+			if nonTradeC then 
+				localProp := (1-`&theta;_temp`)*(1-`my_&zeta;_temp`);
+				`&zeta;_var` := proc (theta, localProp) options operator, arrow; 1-localProp/(1-theta) end proc;
+				`&theta;_var` := proc (Zeta, localProp) options operator, arrow; 1-localProp/(1-Zeta) end proc;
+				tradeFixTitle := "_LocalFix" 
+			else 
+				localProp := (1-`&theta;_temp`)*`my_&zeta;_temp`; 
+				`&zeta;_var` := proc (theta, localProp) options operator, arrow; localProp/(1-theta) end proc; 
+				`&theta;_var` := proc (Zeta, localProp) options operator, arrow; 1-localProp/Zeta end proc; 
+				tradeFixTitle := "_TradeFix" 
+			end if 
+		end if; 
+		
+		if `my_&zeta;_temp` = 0 then 
+			tradeFixTitle := "_zeroTrade" 
+		end if; 
+		
+		tradeFixTitle := ""; 
+		
+		if tradeCSSTest = 1 and paramControlType <> j_paramControlType and `or`(j_paramControlType = 7, j_paramControlType = 9) then 
+			error "TradeCSSTest1d not implemented on y-axis" 
+		end if; 
+		
+		if model_isMutantSwitch then 
+			filenameInvaderType := "_Mutant" 
+		else 
+			filenameInvaderType := "_Migrant" 
+		end if 
+	end proc
+
+##Mutant
+	##Initial Equilibrium
+		initial := proc (discardNonTrivial) 
+			global 
+				dH, dIr, dY, dZr, migrantSolns, i, solutions, viableSolutions, numViableSolns, viableSolnIndex, stableSoln_indices, i_soln, opSoln, H_hat, Ir_hat, Y_hat, Zr_hat, J, eigVal, is_stableSoln, baseIndices, is_baseSoln, 
+				baseIndex, stableBaseIndex, baseIndex_i, initSolnArray, stable, I_hat, Z_hat, initl_viableSolnArray, progressCounter; 
+				
+			if compTrans then 
+				dH := (`&rho;_r`*my_Ir*psi+sigma)*(theta+(1-theta)*H/(H+(1-p)*my_Ir))-omega*H-`&lambda;_r`*Zr*H/(H+my_Ir);
+				dIr := (`&rho;_r`*my_Ir*psi+sigma)*(1-theta)*(1-p)*my_Ir/(H+(1-p)*my_Ir)+`&lambda;_r`*Zr*H/(H+my_Ir)-(omega+`&rho;_r`)*my_Ir;
+				dZr := -(alpha+tau)*Zr+`my_&gamma;r`*(P(alpha)-Zr)*my_Ir/(H+my_Ir) 
+			else 
+				dH := (`&rho;_r`*my_Ir*psi+sigma)*(theta+(1-theta)*H/(H+(1-p)*my_Ir))-omega*H-`&lambda;_r`*Zr*H;
+				dIr := (`&rho;_r`*my_Ir*psi+sigma)*(1-theta)*(1-p)*my_Ir/(H+(1-p)*my_Ir)+`&lambda;_r`*Zr*H-(omega+`&rho;_r`)*my_Ir;
+				dZr := -(alpha+tau)*Zr+`my_&gamma;r`*(P(alpha)-Zr)*my_Ir 
+			end if;
+			migrantSolns := solve({dH = 0, dIr = 0, dZr = 0}, {H, Zr, my_Ir});
+			nops({migrantSolns});
+			
+			test := [];
+			for i to nops({migrantSolns}) do 
+				op(i, {migrantSolns}) 
+			end do;
+			for i to nops({migrantSolns}) do 
+				test := [op(test), convert(op(i, {migrantSolns}), list)] 
+			end do;
+			
+			solutions := convert(`~`[`~`[rhs]](test), Matrix);
+			
+			viableSolutions := `~`[`and`](LinearAlgebra:-Column(`~`[evalb](`~`[`>=`](solutions, 0)), 1 .. LinearAlgebra:-ColumnDimension(`~`[evalb](`~`[`>=`](solutions, 0)))));
+			viableSolutions := convert(viableSolutions, list);
+			
+			numViableSolns := numelems(select(has, viableSolutions, true));
+			viableSolnIndex := [ListTools:-SearchAll(true, viableSolutions)];
+			stableSoln_indices := [];
+			
+			for i_soln to numViableSolns do 
+				opSoln := viableSolnIndex[i_soln];
+				H_hat := eval(H, op(opSoln, {migrantSolns}));
+				Ir_hat := eval(my_Ir, op(opSoln, {migrantSolns}));
+				Zr_hat := eval(Zr, op(opSoln, {migrantSolns}));
+				J := eval(Matrix([[diff(dH, H), diff(dH, my_Ir), diff(dH, Zr)], [diff(dIr, H), diff(dIr, my_Ir), diff(dIr, Zr)], [diff(dZr, H), diff(dZr, my_Ir), diff(dZr, Zr)]]), {H = H_hat, Zr = Zr_hat, my_Ir = Ir_hat});
+				eigVal := LinearAlgebra:-Eigenvalues(J);
+				is_stableSoln := `~`[`and`](convert(`~`[evalb](`~`[`<`](Re(eigVal), 0)), list)[]);
+				if is_stableSoln then 
+					stableSoln_indices := [op(stableSoln_indices), viableSolnIndex[i_soln]] 
+				end if;
+				initl_viableSolnArray['Hstar'] := [op(initl_viableSolnArray['Hstar']), H_hat];
+				initl_viableSolnArray['Ystar'] := [op(initl_viableSolnArray['Ystar']), P(alpha)-Zr_hat];
+				initl_viableSolnArray['Irstar'] := [op(initl_viableSolnArray['Irstar']), Ir_hat];
+				initl_viableSolnArray['Zrstar'] := [op(initl_viableSolnArray['Zrstar']), Zr_hat];
+				initl_viableSolnArray['pointStable'] := [op(initl_viableSolnArray['pointStable']), is_stableSoln];
+				initl_viableSolnArray['i_param'] := [op(initl_viableSolnArray['i_param']), evalf(i_param_value)];
+				initl_viableSolnArray['j_param'] := [op(initl_viableSolnArray['j_param']), evalf(j_param_value)] 
+			end do;
+			
+			is_stableBaseSoln := false;
+			
+			if evalb(numelems(stableSoln_indices) < 1) then 
+				error "No viable/stable solutions for IC" 
+			elif evalb(1 < numelems(stableSoln_indices)) then 
+				baseIndex := [];
+				for i_soln to numViableSolns do 
+					is_baseSoln := evalb(0 < solutions(viableSolnIndex[i_soln], 1)) and evalb(solutions(viableSolnIndex[i_soln], 2) = 0) and evalb(solutions(viableSolnIndex[i_soln], 3) = 0);
+					if is_baseSoln then 
+						baseIndex := [op(baseIndex), viableSolnIndex[i_soln]] 
+					end if 
+				end do;
+				stableBaseIndex := [];
+				for baseIndex_i to numelems(baseIndex) do 
+					stableBaseIndex := [op(stableBaseIndex), ListTools:-Search(baseIndex[baseIndex_i], stableSoln_indices)] 
+				end do;
+				is_stableBaseSoln := `not`(evalb(numelems(stableBaseIndex) = 0));
+				if is_stableBaseSoln then 
+					if discardNonTrivial then 
+						stableSoln_indices := baseIndex 
+					else 
+						stableSoln_indices := remove(has, stableSoln_indices, stableSoln_indices[stableBaseIndex]) 
+					end if 
+				end if;
+				if evalb(1 < numelems(stableSoln_indices)) then 
+					error "Too many stable solutions" 
+				end if 
+			end if;
+			initSolnArray := Record('Hstar' = [], 'Irstar' = [], 'Ystar' = [], 'Zrstar' = [], 'pointStable' = []);
+			for i_soln to numViableSolns do 
+				stable := false;
+				if evalb(0 < ListTools:-Search(viableSolnIndex[i_soln], stableSoln_indices)) then 
+					stable := true;
+					opSoln := viableSolnIndex[i_soln];
+					H_hat := eval(H, op(opSoln, {migrantSolns}));
+					Ir_hat := eval(my_Ir, op(opSoln, {migrantSolns}));
+					Zr_hat := eval(Zr, op(opSoln, {migrantSolns}));
+					initSolnArray['Hstar'] := [op(initSolnArray['Hstar']), H_hat];
+					initSolnArray['Irstar'] := [op(initSolnArray['Irstar']), Ir_hat];
+					initSolnArray['Ystar'] := [op(initSolnArray['Ystar']), P(alpha)-Zr_hat];
+					initSolnArray['Zrstar'] := [op(initSolnArray['Zrstar']), Zr_hat];
+					initSolnArray['pointStable'] := [op(initSolnArray['pointStable']), stable] 
+				end if 
+			end do;
+			progressCounter := 2;
+			return is_stableBaseSoln and discardNonTrivial 
+		end proc	
+		
+	##Final Equilibrium
+		final := proc (isInitialSolnBase) 
+			global 
+				dH, dIr, dI, dY, dZr, dZ, mutantSolns, test, i, solutions, solnCheckMatrix, i_soln, viableSolutions, numViableSolns, viableSolnIndex, finalSoln, notBaseSolnCheck, soln_i, is_baseSoln, opSoln, 
+				H_hat, I_hat, Ir_hat, Y_hat, Z_hat, Zr_hat, J, eigVal, is_stableBaseSoln, stableSoln_indices, is_stableSoln, finalSolnArray, stable, testDensity, testStability, final_viableSolnArray, progressCounter; 
+			
+			if compTrans then 
+				dH := (sigma+psi*(`&rho;_i`*my_I+`&rho;_r`*my_Ir))*(theta+(1-theta)*H/(H+(1-p)*(my_I+my_Ir)))-omega*H-`&lambda;_r`*Zr*H/(H+my_I+my_Ir)-lambda*Z*H/(H+my_I+my_Ir);
+				dIr := (sigma+psi*(`&rho;_i`*my_I+`&rho;_r`*my_Ir))*(1-theta)*(1-p)*my_Ir/(H+(1-p)*(my_I+my_Ir))+`&lambda;_r`*Zr*H/(H+my_I+my_Ir)-(omega+`&rho;_r`)*my_Ir;
+				dI := (sigma+psi*(`&rho;_i`*my_I+`&rho;_r`*my_Ir))*(1-theta)*(1-p)*my_I/(H+(1-p)*(my_I+my_Ir))+lambda*Z*H/(H+my_I+my_Ir)-(omega+`&rho;_i`)*my_I;
+				dZr := -(alpha+tau)*Zr+`my_&gamma;r`*(P(alpha)-Zr-Z)*my_Ir/(H+my_I+my_Ir);
+				dZ := -(alpha+tau)*Z+`my_&gamma;`*(P(alpha)-Zr-Z)*my_I/(H+my_I+my_Ir) 
+			else 
+				dH := (sigma+psi*(`&rho;_i`*my_I+`&rho;_r`*my_Ir))*(theta+(1-theta)*H/(H+(1-p)*(my_I+my_Ir)))-omega*H-lambda*Z*H-`&lambda;_r`*Zr*H;
+				dI := (sigma+psi*(`&rho;_i`*my_I+`&rho;_r`*my_Ir))*(1-theta)*(1-p)*my_I/(H+(1-p)*(my_I+my_Ir))+lambda*Z*H-(omega+`&rho;_i`)*my_I;
+				dIr := (sigma+psi*(`&rho;_i`*my_I+`&rho;_r`*my_Ir))*(1-theta)*(1-p)*my_Ir/(H+(1-p)*(my_I+my_Ir))+`&lambda;_r`*Zr*H-(omega+`&rho;_r`)*my_Ir;
+				dZ := -(alpha+tau)*Z+`my_&gamma;`*(P(alpha)-Zr-Z)*my_I;
+				dZr := -(alpha+tau)*Zr+`my_&gamma;r`*(P(alpha)-Zr-Z)*my_Ir 
+			end if;
+			
+			mutantSolns := solve({dH = 0, dI = 0, dIr = 0, dZ = 0, dZr = 0}, {H, Z, Zr, my_I, my_Ir});
+			nops({mutantSolns});
+			
+			test := [];
+			for i to nops({mutantSolns}) do 
+				op(i, {mutantSolns}) 
+			end do;
+			for i to nops({mutantSolns}) do 
+				test := [op(test), convert(op(i, {mutantSolns}), list)] 
+			end do;
+			
+			solutions := convert(`~`[`~`[rhs]](test), Matrix);
+			
+			solnCheckMatrix := Matrix(LinearAlgebra:-RowDimension(solutions), 5);
+			for i_soln to LinearAlgebra:-RowDimension(solutions) do 
+				solnCheckMatrix(i_soln, 1) := evalb(0 < solutions(i_soln, 1));
+				solnCheckMatrix(i_soln, 2) := evalb(0 < solutions(i_soln, 2));
+				solnCheckMatrix(i_soln, 3) := evalb(0 <= solutions(i_soln, 3));
+				solnCheckMatrix(i_soln, 4) := evalb(0 < solutions(i_soln, 4));
+				solnCheckMatrix(i_soln, 5) := evalb(0 <= solutions(i_soln, 5)) 
+			end do;
+			
+			viableSolutions := `~`[`and`](LinearAlgebra:-Column(solnCheckMatrix, 1 .. LinearAlgebra:-ColumnDimension(solnCheckMatrix)));
+			viableSolutions := convert(viableSolutions, list);
+			numViableSolns := numelems(select(has, viableSolutions, true));
+			
+			viableSolnIndex := [ListTools:-SearchAll(true, viableSolutions)];
+			
+			viableSolnTrivial := false;
+			if evalb(numViableSolns < 1) or isInitialSolnBase then 
+				viableSolnTrivial := true;
+				print("No viable finalSolutions - setting H=base & skipping cCalc");
+				finalSoln := false;
+				viableSolutions := `~`[`and`](LinearAlgebra:-Column(`~`[evalb](`~`[`>=`](solutions, 0)), 1 .. LinearAlgebra:-ColumnDimension(`~`[evalb](`~`[`>=`](solutions, 0)))));
+				viableSolutions := convert(viableSolutions, list);
+				numViableSolns := numelems(select(has, viableSolutions, true));
+				if evalb(numViableSolns = 0) then 
+					error "No Viable Solns AT ALL" 
+				elif evalb(1 < numViableSolns) then 
+					viableSolnIndex := [ListTools:-SearchAll(true, viableSolutions)] 
+				else 
+					viableSolnIndex := [ListTools:-SearchAll(true, viableSolutions)] 
+				end if 
+			end if;
+			
+			for i_soln to LinearAlgebra:-RowDimension(solutions) do 
+				soln_i := solutions(i_soln, () .. ());
+				
+				is_baseSoln := evalb(0 < soln_i(1)) and evalb(soln_i(2) = 0) and evalb(soln_i(3) = 0) and evalb(soln_i(4) = 0) and evalb(soln_i(5) = 0);
+				
+				if is_baseSoln then 
+					baseIndex := i_soln;
+					opSoln := i_soln;
+					H_hat := eval(H, op(opSoln, {mutantSolns}));
+					I_hat := eval(my_I, op(opSoln, {mutantSolns}));
+					Ir_hat := eval(my_Ir, op(opSoln, {mutantSolns}));
+					Z_hat := eval(Z, op(opSoln, {mutantSolns}));
+					Zr_hat := eval(Zr, op(opSoln, {mutantSolns}));
+					J := eval(Matrix([
+							[diff(dH, H), diff(dH, my_I), diff(dH, my_Ir), diff(dH, Z), diff(dH, Zr)], 
+							[diff(dI, H), diff(dI, my_I), diff(dI, my_Ir), diff(dI, Z), diff(dI, Zr)], 
+							[diff(dIr, H), diff(dIr, my_I), diff(dIr, my_Ir), diff(dIr, Z), diff(dIr, Zr)], 
+							[diff(dZ, H), diff(dZ, my_I), diff(dZ, my_Ir), diff(dZ, Z), diff(dZ, Zr)], 
+							[diff(dZr, H), diff(dZr, my_I), diff(dZr, my_Ir), diff(dZr, Z), diff(dZr, Zr)]
+						]), 
+						{H = H_hat, Z = Z_hat, Zr = Zr_hat, my_I = I_hat, my_Ir = Ir_hat}
+					);
+					eigVal := LinearAlgebra:-Eigenvalues(J);
+					is_stableBaseSoln := `~`[`and`](convert(`~`[evalb](`~`[`<`](Re(eigVal), 0)), list)[]);
+					if `not`(viableSolnTrivial) then 
+						final_viableSolnArray['Hfinal'] := [op(final_viableSolnArray['Hfinal']), H_hat];
+						final_viableSolnArray['Irfinal'] := [op(final_viableSolnArray['Irfinal']), 0];
+						final_viableSolnArray['Iifinal'] := [op(final_viableSolnArray['Iifinal']), 0];
+						final_viableSolnArray['Yfinal'] := [op(final_viableSolnArray['Yfinal']), P(alpha)];
+						final_viableSolnArray['Zrfinal'] := [op(final_viableSolnArray['Zrfinal']), 0];
+						final_viableSolnArray['Zifinal'] := [op(final_viableSolnArray['Zifinal']), 0];
+						final_viableSolnArray['pointStable'] := [op(final_viableSolnArray['pointStable']), is_stableBaseSoln];
+						final_viableSolnArray['i_param'] := [op(final_viableSolnArray['i_param']), evalf(i_param_value)];
+						final_viableSolnArray['j_param'] := [op(final_viableSolnArray['j_param']), evalf(j_param_value)] 
+					end if 
+				end if 
+			end do;
+			
+			stableSoln_indices := [];
+			for i_soln to numViableSolns do 
+				opSoln := viableSolnIndex[i_soln];
+				H_hat := eval(H, op(opSoln, {mutantSolns}));
+				I_hat := eval(my_I, op(opSoln, {mutantSolns}));
+				Ir_hat := eval(my_Ir, op(opSoln, {mutantSolns}));
+				Z_hat := eval(Z, op(opSoln, {mutantSolns}));
+				Zr_hat := eval(Zr, op(opSoln, {mutantSolns}));
+				J := eval(Matrix([
+						[diff(dH, H), diff(dH, my_I), diff(dH, my_Ir), diff(dH, Z), diff(dH, Zr)], 
+						[diff(dI, H), diff(dI, my_I), diff(dI, my_Ir), diff(dI, Z), diff(dI, Zr)], 
+						[diff(dIr, H), diff(dIr, my_I), diff(dIr, my_Ir), diff(dIr, Z), diff(dIr, Zr)], 
+						[diff(dZ, H), diff(dZ, my_I), diff(dZ, my_Ir), diff(dZ, Z), diff(dZ, Zr)], 
+						[diff(dZr, H), diff(dZr, my_I), diff(dZr, my_Ir), diff(dZr, Z), diff(dZr, Zr)]
+					]), 
+					{H = H_hat, Z = Z_hat, Zr = Zr_hat, my_I = I_hat, my_Ir = Ir_hat}
+				);
+				eigVal := LinearAlgebra:-Eigenvalues(J);
+				is_stableSoln := `~`[`and`](convert(`~`[evalb](`~`[`<`](Re(eigVal), 0)), list)[]);
+				if is_stableSoln then 
+					stableSoln_indices := [op(stableSoln_indices), viableSolnIndex[i_soln]] 
+				end if;
+				final_viableSolnArray['Hfinal'] := [op(final_viableSolnArray['Hfinal']), H_hat];
+				final_viableSolnArray['Irfinal'] := [op(final_viableSolnArray['Irfinal']), Ir_hat];
+				final_viableSolnArray['Iifinal'] := [op(final_viableSolnArray['Iifinal']), I_hat];
+				final_viableSolnArray['Yfinal'] := [op(final_viableSolnArray['Yfinal']), P(alpha)-Zr_hat-Z_hat];
+				final_viableSolnArray['Zrfinal'] := [op(final_viableSolnArray['Zrfinal']), Zr_hat];
+				final_viableSolnArray['Zifinal'] := [op(final_viableSolnArray['Zifinal']), Z_hat];
+				final_viableSolnArray['pointStable'] := [op(final_viableSolnArray['pointStable']), is_stableSoln];
+				final_viableSolnArray['i_param'] := [op(final_viableSolnArray['i_param']), evalf(i_param_value)];
+				final_viableSolnArray['j_param'] := [op(final_viableSolnArray['j_param']), evalf(j_param_value)] 
+			end do;
+			
+			if evalb(numelems(stableSoln_indices) < 1) then 
+				print("No Viable/Stable Solutions for IC");
+				error "No Viable/Stable Solutions for IC" 
+			elif evalb(1 < numelems(stableSoln_indices)) then 
+				print("Multiple viable/stable solutions - must select");
+				stableSoln_indices := [baseIndex] 
+			end if;
+			
+			finalSolnArray := Record('Hfinal' = [], 'Yfinal' = [], 'Irfinal' = [], 'Iifinal' = [], 'Zrfinal' = [], 'Zifinal' = [], 'pointStable' = []);
+			for i_soln to numViableSolns do 
+				stable := false;
+				if evalb(0 < ListTools:-Search(viableSolnIndex[i_soln], stableSoln_indices)) then 
+					stable := true;
+					opSoln := viableSolnIndex[i_soln];
+					H_hat := eval(H, op(opSoln, {mutantSolns}));
+					I_hat := eval(my_I, op(opSoln, {mutantSolns}));
+					Ir_hat := eval(my_Ir, op(opSoln, {mutantSolns}));
+					Z_hat := eval(Z, op(opSoln, {mutantSolns}));
+					Zr_hat := eval(Zr, op(opSoln, {mutantSolns}));
+					finalSolnArray['Hfinal'] := [op(finalSolnArray['Hfinal']), H_hat];
+					finalSolnArray['Yfinal'] := [op(finalSolnArray['Yfinal']), P(alpha)-Zr_hat-Z_hat];
+					finalSolnArray['Irfinal'] := [op(finalSolnArray['Irfinal']), Ir_hat];
+					finalSolnArray['Iifinal'] := [op(finalSolnArray['Iifinal']), I_hat];
+					finalSolnArray['Zrfinal'] := [op(finalSolnArray['Zrfinal']), Zr_hat];
+					finalSolnArray['Zifinal'] := [op(finalSolnArray['Zifinal']), Z_hat];
+					finalSolnArray['pointStable'] := [op(finalSolnArray['pointStable']), stable] 
+				else 
+					print("Dumping unstable final eqm") 
+				end if 
+			end do;
+			
+			finalSoln := false;
+			if evalb(0 < numelems(finalSolnArray['Hfinal'])) then 
+				for i_soln to numelems(finalSolnArray['Hfinal']) do 
+					testDensity := 0 < finalSolnArray['Hfinal'][i_soln] and 
+						0 < finalSolnArray['Yfinal'][i_soln] and 
+						0 <= finalSolnArray['Irfinal'][i_soln] and 
+						0 <= finalSolnArray['Zrfinal'][i_soln] and 
+						0 < finalSolnArray['Iifinal'][i_soln] and 
+						0 < finalSolnArray['Zifinal'][i_soln];
+					testStability := finalSolnArray['pointStable'][i_soln];
+					if testDensity and testStability then 
+						finalSoln := true 
+					end if 
+				end do 
+			end if;
+			progressCounter := 3 
+		end proc
+		
+	##Speed Analysis
+		speed := proc () 
+			global 
+				temp, tempArray, i_soln, H_hat, Y_hat, I_hat, Z_hat, L, dLda, cSolve, i, test, cSolutions, cViableSolns, cNumViableSolns, cValue, cIndex, initSolnArray, j_soln, results_matrix, progressCounter; 
+				
+			temp := initSolnArray;
+			tempArray := Record(cSoln = []);
+			if finalSoln then 
+				for i_soln to numelems(initSolnArray['Hstar']) do 
+					H_hat := initSolnArray['Hstar'][i_soln];
+					Y_hat := initSolnArray['Ystar'][i_soln];
+					I_hat := initSolnArray['Irstar'][i_soln];
+					Z_hat := initSolnArray['Zrstar'][i_soln];
+					if compTrans then 
+						if psi <> 0 then 
+							error "Case not implemented" 
+						end if;
+						L := a^2*c^2
+							-a*c*(sigma*(1-theta)*(1-p)*(1-`my_&zeta;`+`my_&zeta;`/(1-D_T^2*a^2/sqrt(2)^2))/(H_hat+(1-p)*I_hat)-omega-`&rho;_i`-alpha-tau+D_migrate*(1/(1-D_V^2*a^2/sqrt(2)^2)-1))
+							+(sigma*(1-theta)*(1-p)*(1-`my_&zeta;`+`my_&zeta;`/(1-D_T^2*a^2/sqrt(2)^2))/(H_hat+(1-p)*I_hat)-omega-`&rho;_i`)*(-alpha-tau+D_migrate*(1/(1-D_V^2*a^2/sqrt(2)^2)-1))
+							-lambda*`my_&gamma;`*H_hat*(P(alpha)-Z_hat)/(H_hat+I_hat)^2 
+					else 
+						L := a^2*c^2
+							-a*c*((`&rho;_r`*I_hat*psi+sigma)*(1-theta)*(1-p)*(1-`my_&zeta;`+`my_&zeta;`/(1-D_T^2*a^2/sqrt(2)^2))/(H_hat+(1-p)*I_hat)-omega-`&rho;_i`-alpha-tau+D_migrate*(1/(1-D_V^2*a^2/sqrt(2)^2)-1))
+							+((`&rho;_r`*I_hat*psi+sigma)*(1-theta)*(1-p)*(1-`my_&zeta;`+`my_&zeta;`/(1-D_T^2*a^2/sqrt(2)^2))/(H_hat+(1-p)*I_hat)-omega-`&rho;_i`)*(-alpha-tau+D_migrate*(1/(1-D_V^2*a^2/sqrt(2)^2)-1))
+							-lambda*`my_&gamma;`*H_hat*(P(alpha)-Z_hat) 
+					end if;
+					dLda := diff(L, a);
+					cSolve := solve({L = 0, dLda = 0}, {a, c});
+					nops({cSolve});
+					for i to nops({cSolve}) do 
+						op(i, {cSolve}) 
+					end do;
+					test := [];
+					for i to nops({cSolve}) do 
+						test := [op(test), convert(op(i, {cSolve}), list)] 
+					end do;
+					cSolutions := convert(`~`[`~`[rhs]](test), Matrix);
+					if D_T = 0 then 
+						cViableSolns := `~`[`and`](`~`[`and`](`~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 1)), 0)), `~`[evalb](`~`[`<`](Re(cSolutions(() .. (), 1)), evalf(sqrt(2)/D_V)))), `~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 2)), 0))) 
+					elif `not`(p = 1 or `my_&zeta;` = 0 or theta = 1) and evalf(sqrt(2)/D_T) <= evalf(sqrt(2)/D_V) then 
+						cViableSolns := `~`[`and`](`~`[`and`](`~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 1)), 0)), `~`[evalb](`~`[`<`](Re(cSolutions(() .. (), 1)), evalf(sqrt(2)/D_T)))), `~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 2)), 0))) 
+					else 
+						cViableSolns := `~`[`and`](`~`[`and`](`~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 1)), 0)), `~`[evalb](`~`[`<`](Re(cSolutions(() .. (), 1)), evalf(sqrt(2)/D_V)))), `~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 2)), 0))) 
+					end if;
+					cNumViableSolns := add(i, i = evalhf(cViableSolns));
+					if cNumViableSolns < 1 then 
+						error "No viable c solutions" 
+					elif 1 < cNumViableSolns then 
+						cViableIndices := ListTools:-SearchAll(true, convert(cViableSolns, list));
+						if evalb(1 < numelems(convert((Re(cSolutions))([cViableIndices], 1), set))) then 
+							error "Multiple Viable Solutions!" 
+						else 
+							cIndex := cViableIndices[1];
+							cValue := cSolutions(cIndex, 2) 
+						end if 
+					else 
+						cIndex := ListTools:-SearchAll(true, cViableSolns);
+						cValue := cSolutions(cIndex, 2) 
+					end if;
+					tempArray['cSoln'] := [op(tempArray['cSoln']), cValue] 
+				end do 
+			else 
+				cValue := 0;
+				tempArray['cSoln'] := [op(tempArray['cSoln']), cValue] 
+			end if;
+			initSolnArray := Record[temp, tempArray]();
+			for i_soln to numelems(initSolnArray['Hstar']) do 
+				for j_soln to numelems(finalSolnArray['Hfinal']) do 
+					results_matrix['i_param'] := [op(results_matrix['i_param']), evalf(i_param_value)];
+					results_matrix['j_param'] := [op(results_matrix['j_param']), evalf(j_param_value)];
+					results_matrix['H_init'] := [op(results_matrix['H_init']), initSolnArray['Hstar'][i_soln]];
+					results_matrix['Y_init'] := [op(results_matrix['Y_init']), initSolnArray['Ystar'][i_soln]];
+					results_matrix['Ir_init'] := [op(results_matrix['Ir_init']), initSolnArray['Irstar'][i_soln]];
+					results_matrix['Zr_init'] := [op(results_matrix['Zr_init']), initSolnArray['Zrstar'][i_soln]];
+					results_matrix['init_stable'] := [op(results_matrix['init_stable']), initSolnArray['pointStable'][i_soln]];
+					results_matrix['cSoln'] := [op(results_matrix['cSoln']), initSolnArray['cSoln'][i_soln]];
+					results_matrix['H_final'] := [op(results_matrix['H_final']), finalSolnArray['Hfinal'][j_soln]];
+					results_matrix['Y_final'] := [op(results_matrix['Y_final']), finalSolnArray['Yfinal'][j_soln]];
+					results_matrix['Ir_final'] := [op(results_matrix['Ir_final']), finalSolnArray['Irfinal'][j_soln]];
+					results_matrix['Ii_final'] := [op(results_matrix['Ii_final']), finalSolnArray['Iifinal'][j_soln]];
+					results_matrix['Zr_final'] := [op(results_matrix['Zr_final']), finalSolnArray['Zrfinal'][j_soln]];
+					results_matrix['Zi_final'] := [op(results_matrix['Zi_final']), finalSolnArray['Zifinal'][j_soln]];
+					results_matrix['final_stable'] := [op(results_matrix['final_stable']), finalSolnArray['pointStable'][j_soln]];
+					if paramControlType = 9 and tradeCSSTest then 
+						results_matrix['thetaMod'] := [op(results_matrix['thetaMod']), evalf(theta)] 
+					elif paramControlType = 7 and tradeCSSTest then 
+						results_matrix['zetaMod'] := [op(results_matrix['zetaMod']), evalf(Zeta)] 
+					end if 
+				end do 
+			end do;
+			progressCounter := 4 
+		end proc	
+
+##Migrant
+	##Initial Equilibrium
+		initialMigrant := proc (discardNonTrivial) 
+			global 
+				dH, dIr, dY, dZr, migrantSolns, i, solutions, viableSolutions, numViableSolns, viableSolnIndex, stableSoln_indices, i_soln, opSoln, H_hat, Ir_hat, Y_hat, Zr_hat, J, eigVal, is_stableSoln, baseIndices, is_baseSoln, 
+				baseIndex, stableBaseIndex, baseIndex_i, initSolnArray, stable, I_hat, Z_hat, initl_viableSolnArray, progressCounter; 
+				
+			if compTrans then 
+				dH := -H*omega+sigma 
+			else 
+				dH := -H*omega+sigma 
+			end if;
+			migrantSolns := solve([dH = 0], [H]);
+			nops(migrantSolns);
+			for i to nops(migrantSolns) do 
+				op(i, migrantSolns) 
+			end do;
+			solutions := convert(`~`[`~`[rhs]](migrantSolns), Matrix);
+			viableSolutions := `~`[`and`](LinearAlgebra:-Column(`~`[evalb](`~`[`>=`](solutions, 0)), 1 .. LinearAlgebra:-ColumnDimension(`~`[evalb](`~`[`>=`](solutions, 0)))));
+			viableSolutions := convert(viableSolutions, list);
+			
+			numViableSolns := numelems(select(has, viableSolutions, true));
+			viableSolnIndex := [ListTools:-SearchAll(true, viableSolutions)];
+			stableSoln_indices := [];
+			
+			for i_soln to numViableSolns do 
+				opSoln := viableSolnIndex[i_soln];
+				H_hat := eval(H, op(opSoln, migrantSolns));
+				Y_hat := eval(Y, op(opSoln, migrantSolns));
+				J := eval(Matrix([[diff(dH, H)]]), {H = H_hat});
+				eigVal := LinearAlgebra:-Eigenvalues(J);
+				is_stableSoln := `~`[`and`](convert(`~`[evalb](`~`[`<`](Re(eigVal), 0)), list)[]);
+				if is_stableSoln then 
+					stableSoln_indices := [op(stableSoln_indices), viableSolnIndex[i_soln]] 
+				end if;
+				initl_viableSolnArray['Hstar'] := [op(initl_viableSolnArray['Hstar']), H_hat];
+				initl_viableSolnArray['Ystar'] := [op(initl_viableSolnArray['Ystar']), P(alpha)];
+				initl_viableSolnArray['pointStable'] := [op(initl_viableSolnArray['pointStable']), is_stableSoln];
+				initl_viableSolnArray['i_param'] := [op(initl_viableSolnArray['i_param']), evalf(i_param_value)];
+				initl_viableSolnArray['j_param'] := [op(initl_viableSolnArray['j_param']), evalf(j_param_value)] 
+			end do;
+			
+			is_stableBaseSoln := false;
+			
+			if evalb(numelems(stableSoln_indices) < 1) then 
+				error "No viable/stable solutions for IC" 
+			elif evalb(1 < numelems(stableSoln_indices)) then 
+				baseIndices := [];
+				for i_soln to numViableSolns do 
+					is_baseSoln := evalb(0 < solutions(viableSolnIndex[i_soln], 1));
+					if is_baseSoln then 
+						baseIndex := [op(baseIndex), viableSolnIndex[i_soln]] 
+					end if 
+				end do;
+				
+				stableBaseIndex := [];
+				for baseIndex_i to numelems(baseIndex) do 
+					stableBaseIndex := [op(stableBaseIndex), ListTools:-Search(stableSoln_indices, baseIndices[baseIndex_i])] 
+				end do;
+				is_stableBaseSoln := `not`(evalb(numelems(stableBaseIndex) = 0));
+				if is_stableBaseSoln then 
+					if discardNonTrivial then 
+						stableSoln_indices := baseIndex 
+					else 
+						stableSoln_indices := remove(has, stableSoln_indices, stableSoln_indices[stableBaseIndex]) 
+					end if 
+				end if;
+				if evalb(1 < numelems(stableSoln_indices)) then 
+					error "Too many stable solutions" 
+				end if 
+			end if;
+			
+			initSolnArray := Record('Hstar' = [], 'Irstar' = [], 'Ystar' = [], 'Zrstar' = [], 'pointStable' = []);
+			
+			for i_soln to numViableSolns do 
+				stable := false;
+				if evalb(0 < ListTools:-Search(viableSolnIndex[i_soln], stableSoln_indices)) then 
+					stable := true;
+					opSoln := viableSolnIndex[i_soln];
+					H_hat := eval(H, op(opSoln, migrantSolns));
+					Y_hat := P(alpha);
+					initSolnArray['Hstar'] := [op(initSolnArray['Hstar']), H_hat];
+					initSolnArray['Ystar'] := [op(initSolnArray['Ystar']), Y_hat];
+					initSolnArray['pointStable'] := [op(initSolnArray['pointStable']), stable] 
+				end if 
+			end do;
+			progressCounter := 2;
+			return is_stableBaseSoln and discardNonTrivial 
+		end proc
+
+		
+	##Final Equilibrium
+		finalMigrant := proc (isInitialSolnBase) 
+			global 
+				dH, dIr, dI, dY, dZr, dZ, mutantSolns, test, i, solutions, solnCheckMatrix, i_soln, viableSolutions, numViableSolns, viableSolnIndex, finalSoln, notBaseSolnCheck, soln_i, is_baseSoln, opSoln, 
+				H_hat, I_hat, Ir_hat, Y_hat, Z_hat, Zr_hat, J, eigVal, is_stableBaseSoln, stableSoln_indices, is_stableSoln, finalSolnArray, stable, testDensity, testStability, final_viableSolnArray, progressCounter; 
+				
+			if compTrans then 
+				dH := (`&rho;_i`*my_I*psi+sigma)*(theta+(1-theta)*H/(H+(1-p)*my_I))-omega*H-lambda*Z*H/(H+my_I);
+				dI := (`&rho;_i`*my_I*psi+sigma)*(1-theta)*(1-p)*my_I/(H+(1-p)*my_I)+lambda*Z*H/(H+my_I)-(omega+`&rho;_i`)*my_I;
+				dZ := -(alpha+tau)*Z+`my_&gamma;`*(P(alpha)-Z)*my_I/(H+my_I) 
+			else 
+				dH := (`&rho;_i`*my_I*psi+sigma)*(theta+(1-theta)*H/(H+(1-p)*my_I))-omega*H-lambda*Z*H;
+				dI := (`&rho;_i`*my_I*psi+sigma)*(1-theta)*(1-p)*my_I/(H+(1-p)*my_I)+lambda*Z*H-(omega+`&rho;_i`)*my_I;
+				dZ := -(alpha+tau)*Z+`my_&gamma;`*(P(alpha)-Z)*my_I 
+			end if;
+			mutantSolns := RealDomain:-solve({dH = 0, dI = 0, dZ = 0}, {H, Z, my_I});
+			nops({mutantSolns});
+	
+			test := [];
+			for i to nops({mutantSolns}) do 
+				op(i, {mutantSolns}) 
+			end do;
+		for i to nops({mutantSolns}) do 
+			test := [op(test), convert(op(i, {mutantSolns}), list)] 
+		end do;
+		solutions := convert(`~`[`~`[rhs]](test), Matrix);
+		if i_control = 1 and j_control = 1 then 
+			print("Order Check", op(1, {mutantSolns}));
+			print("Order Check", solutions[1, () .. ()]);
+			print("Order = [H,Y,I,Z]?") 
+		end if;
+		solnCheckMatrix := Matrix(LinearAlgebra:-RowDimension(solutions), 3);
+		for i_soln to LinearAlgebra:-RowDimension(solutions) do 
+			solnCheckMatrix(i_soln, 1) := evalb(0 < solutions(i_soln, 1));
+			solnCheckMatrix(i_soln, 2) := evalb(0 < solutions(i_soln, 2));
+			solnCheckMatrix(i_soln, 3) := evalb(0 < solutions(i_soln, 3)) 
+		end do;
+		
+		viableSolutions := `~`[`and`](LinearAlgebra:-Column(solnCheckMatrix, 1 .. LinearAlgebra:-ColumnDimension(solnCheckMatrix)));
+		viableSolutions := convert(viableSolutions, list);
+		numViableSolns := numelems(select(has, viableSolutions, true));
+	
+		viableSolnIndex := [ListTools:-SearchAll(true, viableSolutions)];
+	
+		viableSolnTrivial := false;
+		if evalb(numViableSolns < 1) or isInitialSolnBase then 
+			viableSolnTrivial := true;
+			print("No viable finalSolutions - setting H=base & skipping cCalc");
+			finalSoln := false;
+			solnCheckMatrix := Matrix(LinearAlgebra:-RowDimension(solutions), 4);
+			for i_soln to LinearAlgebra:-RowDimension(solutions) do 
+				solnCheckMatrix(i_soln, 1) := evalb(0 < solutions(i_soln, 1));
+				solnCheckMatrix(i_soln, 2) := evalb(0 <= solutions(i_soln, 2));
+				solnCheckMatrix(i_soln, 3) := evalb(0 <= solutions(i_soln, 3)) 
+			end do;
+			viableSolutions := `~`[`and`](LinearAlgebra:-Column(solnCheckMatrix, 1 .. LinearAlgebra:-ColumnDimension(solnCheckMatrix)));
+			viableSolutions := convert(viableSolutions, list);
+			numViableSolns := numelems(select(has, viableSolutions, true));
+			if evalb(numViableSolns = 0) then 
+				error "No Viable Solns AT ALL" 
+			elif evalb(1 < numViableSolns) then 
+				viableSolnIndex := [ListTools:-SearchAll(true, viableSolutions)] 
+			else 
+				viableSolnIndex := [ListTools:-SearchAll(true, viableSolutions)] 
+			end if 
+		end if;
+		
+		for i_soln to LinearAlgebra:-RowDimension(solutions) do 
+			soln_i := solutions(i_soln, () .. ());
+			is_baseSoln := evalb(0 < soln_i(1)) and evalb(soln_i(2) = 0) and evalb(soln_i(3) = 0);
+			if is_baseSoln then 
+				opSoln := i_soln;
+				H_hat := eval(H, op(opSoln, {mutantSolns}));
+				I_hat := eval(my_I, op(opSoln, {mutantSolns}));
+				Z_hat := eval(Z, op(opSoln, {mutantSolns}));
+				J := eval(Matrix([[diff(dH, H), diff(dH, my_I), diff(dH, Z)], [diff(dI, H), diff(dI, my_I), diff(dI, Z)], [diff(dZ, H), diff(dZ, my_I), diff(dZ, Z)]]), {H = H_hat, Z = Z_hat, my_I = I_hat});
+				eigVal := LinearAlgebra:-Eigenvalues(J);
+				is_stableBaseSoln := `~`[`and`](convert(`~`[evalb](`~`[`<`](Re(eigVal), 0)), list)[]);
+				if `not`(viableSolnTrivial) then 
+					final_viableSolnArray['Hfinal'] := [op(final_viableSolnArray['Hfinal']), H_hat];
+					final_viableSolnArray['Yfinal'] := [op(final_viableSolnArray['Yfinal']), P(alpha)];
+					final_viableSolnArray['Iifinal'] := [op(final_viableSolnArray['Iifinal']), 0];
+					final_viableSolnArray['Zifinal'] := [op(final_viableSolnArray['Zifinal']), 0];
+					final_viableSolnArray['pointStable'] := [op(final_viableSolnArray['pointStable']), is_stableBaseSoln];
+					final_viableSolnArray['i_param'] := [op(final_viableSolnArray['i_param']), evalf(i_param_value)];
+					final_viableSolnArray['j_param'] := [op(final_viableSolnArray['j_param']), evalf(j_param_value)] 
+				end if 
+			end if 
+		end do;
+		stableSoln_indices := [];
+		for i_soln to numViableSolns do 
+			opSoln := viableSolnIndex[i_soln];
+			H_hat := eval(H, op(opSoln, {mutantSolns}));
+			I_hat := eval(my_I, op(opSoln, {mutantSolns}));
+			Z_hat := eval(Z, op(opSoln, {mutantSolns}));
+			J := eval(Matrix([[diff(dH, H), diff(dH, my_I), diff(dH, Z)], [diff(dI, H), diff(dI, my_I), diff(dI, Z)], [diff(dZ, H), diff(dZ, my_I), diff(dZ, Z)]]), {H = H_hat, Z = Z_hat, my_I = I_hat});
+			eigVal := LinearAlgebra:-Eigenvalues(J);
+			is_stableSoln := `~`[`and`](convert(`~`[evalb](`~`[`<`](Re(eigVal), 0)), list)[]);
+			if is_stableSoln then 
+				stableSoln_indices := [op(stableSoln_indices), viableSolnIndex[i_soln]] 
+			end if;
+			final_viableSolnArray['Hfinal'] := [op(final_viableSolnArray['Hfinal']), H_hat];
+			final_viableSolnArray['Iifinal'] := [op(final_viableSolnArray['Iifinal']), I_hat];
+			final_viableSolnArray['Yfinal'] := [op(final_viableSolnArray['Yfinal']), P(alpha)-Z_hat];
+			final_viableSolnArray['Zifinal'] := [op(final_viableSolnArray['Zifinal']), Z_hat];
+			final_viableSolnArray['pointStable'] := [op(final_viableSolnArray['pointStable']), is_stableSoln];
+			final_viableSolnArray['i_param'] := [op(final_viableSolnArray['i_param']), evalf(i_param_value)];
+			final_viableSolnArray['j_param'] := [op(final_viableSolnArray['j_param']), evalf(j_param_value)] 
+		end do;
+		if evalb(numelems(stableSoln_indices) < 1) then 
+			error "No Viable/Stable Solutions for IC" 
+		elif evalb(1 < numelems(stableSoln_indices)) then 
+			print("Multiple viable/stable solutions - must select");
+			stableSoln_indices := [baseIndex] 
+		end if;
+		finalSolnArray := Record('Hfinal' = [], 'Yfinal' = [], 'Irfinal' = [], 'Iifinal' = [], 'Zrfinal' = [], 'Zifinal' = [], 'pointStable' = []);
+		for i_soln to numViableSolns do 
+			stable := false;
+			if evalb(0 < ListTools:-Search(viableSolnIndex[i_soln], stableSoln_indices)) then 
+				stable := true;
+				opSoln := viableSolnIndex[i_soln];
+				H_hat := eval(H, op(opSoln, {mutantSolns}));
+				I_hat := eval(my_I, op(opSoln, {mutantSolns}));
+				Z_hat := eval(Z, op(opSoln, {mutantSolns}));
+				finalSolnArray['Hfinal'] := [op(finalSolnArray['Hfinal']), H_hat];
+				finalSolnArray['Yfinal'] := [op(finalSolnArray['Yfinal']), P(alpha)-Z_hat];
+				finalSolnArray['Iifinal'] := [op(finalSolnArray['Iifinal']), I_hat];
+				finalSolnArray['Zifinal'] := [op(finalSolnArray['Zifinal']), Z_hat];
+				finalSolnArray['pointStable'] := [op(finalSolnArray['pointStable']), stable] else print("Dumping unstable final eqm") 
+			end if 
+		end do;
+		finalSoln := false;
+		if evalb(0 < numelems(finalSolnArray['Hfinal'])) then 
+			for i_soln to numelems(finalSolnArray['Hfinal']) do 
+				testDensity := 
+					0 < finalSolnArray['Hfinal'][i_soln] and 
+					0 < finalSolnArray['Yfinal'][i_soln] and 
+					0 < finalSolnArray['Iifinal'][i_soln] and 
+					0 < finalSolnArray['Zifinal'][i_soln];
+				testStability := finalSolnArray['pointStable'][i_soln];
+				if testDensity and testStability then 
+					finalSoln := true 
+				end if 
+			end do 
+		end if;
+		progressCounter := 3 end proc
+		
+	##Speed Analysis
+		speedMigrant := proc () 
+			local 
+				temp, tempArray, i_soln, H_hat, Y_hat, cViableIndices, L, dLda, cSolve, i, test, cSolutions, cViableSolns, cNumViableSolns, cValue, cIndex, j_soln; global initSolnArray, results_matrix, progressCounter; 
+			
+			temp := initSolnArray;
+			tempArray := Record(cSoln = []);
+			print(D_T);
+			if finalSoln then 
+				for i_soln to numelems(initSolnArray['Hstar']) do 
+					H_hat := initSolnArray['Hstar'][i_soln];
+					Y_hat := initSolnArray['Ystar'][i_soln];
+					if compTrans then 
+						L := a^2*c^2
+							-a*c*(sigma*(1-theta)*(1-p)*(1-`my_&zeta;`+`my_&zeta;`/(1-D_T^2*a^2/sqrt(2)^2))/H_hat-omega-`&rho;_i`-alpha-tau+D_migrate*(1/(1-D_V^2*a^2/sqrt(2)^2)-1))
+							+(sigma*(1-theta)*(1-p)*(1-`my_&zeta;`+`my_&zeta;`/(1-D_T^2*a^2/sqrt(2)^2))/H_hat-omega-`&rho;_i`)*(-alpha-tau+D_migrate*(1/(1-D_V^2*a^2/sqrt(2)^2)-1))
+							-lambda*`my_&gamma;`*P(alpha)/H_hat 
+					else 
+						L := a^2*c^2
+							-a*c*(sigma*(1-theta)*(1-p)*(1-`my_&zeta;`+`my_&zeta;`/(1-D_T^2*a^2/sqrt(2)^2))/H_hat-omega-`&rho;_i`-alpha-tau+D_migrate*(1/(1-D_V^2*a^2/sqrt(2)^2)-1))
+							+(sigma*(1-theta)*(1-p)*(1-`my_&zeta;`+`my_&zeta;`/(1-D_T^2*a^2/sqrt(2)^2))/H_hat-omega-`&rho;_i`)*(-alpha-tau+D_migrate*(1/(1-D_V^2*a^2/sqrt(2)^2)-1))
+							-lambda*`my_&gamma;`*H_hat*P(alpha) 
+					end if;
+					dLda := diff(L, a);
+					cSolve := solve({L = 0, dLda = 0}, {a, c});
+					nops({cSolve});
+					for i to nops({cSolve}) do 
+						op(i, {cSolve}) 
+					end do;
+					test := [];
+					for i to nops({cSolve}) do 
+						test := [op(test), convert(op(i, {cSolve}), list)] 
+					end do;
+					cSolutions := convert(`~`[`~`[rhs]](test), Matrix);
+					if D_T = 0 then 
+						cViableSolns := `~`[`and`](`~`[`and`](`~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 1)), 0)), `~`[evalb](`~`[`<`](Re(cSolutions(() .. (), 1)), evalf(sqrt(2)/D_V)))), `~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 2)), 0))) 
+					elif `not`(p = 1 or `my_&zeta;` = 0 or theta = 1) and evalf(sqrt(2)/D_T) <= evalf(sqrt(2)/D_V) then 
+						cViableSolns := `~`[`and`](`~`[`and`](`~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 1)), 0)), `~`[evalb](`~`[`<`](Re(cSolutions(() .. (), 1)), evalf(sqrt(2)/D_T)))), `~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 2)), 0))) 
+					else 
+						cViableSolns := `~`[`and`](`~`[`and`](`~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 1)), 0)), `~`[evalb](`~`[`<`](Re(cSolutions(() .. (), 1)), evalf(sqrt(2)/D_V)))), `~`[evalb](`~`[`>`](Re(cSolutions(() .. (), 2)), 0))) 
+					end if;
+					cNumViableSolns := add(i, i = evalhf(cViableSolns));
+					if cNumViableSolns < 1 then 
+						return -1 
+					elif 1 < cNumViableSolns then 
+						cViableIndices := ListTools:-SearchAll(true, convert(cViableSolns, list));
+						if evalb(1 < numelems(convert((Re(cSolutions))([cViableIndices], 1), set))) then 
+							error "Multiple Viable Solutions!" 
+						else 
+							cIndex := cViableIndices[1];
+							cValue := cSolutions(cIndex, 2) 
+						end if 
+					else 
+						cIndex := ListTools:-SearchAll(true, cViableSolns);
+						cValue := cSolutions(cIndex, 2) 
+					end if;
+					tempArray['cSoln'] := [op(tempArray['cSoln']), cValue] 
+				end do 
+			else 
+				cValue := 0;
+				tempArray['cSoln'] := [op(tempArray['cSoln']), cValue] 
+			end if;
+			initSolnArray := Record[temp, tempArray]();
+			for i_soln to numelems(initSolnArray['Hstar']) do 
+				for j_soln to numelems(finalSolnArray['Hfinal']) do 
+					results_matrix['i_param'] := [op(results_matrix['i_param']), evalf(i_param_value)];
+					results_matrix['j_param'] := [op(results_matrix['j_param']), evalf(j_param_value)];
+					results_matrix['H_init'] := [op(results_matrix['H_init']), initSolnArray['Hstar'][i_soln]];
+					results_matrix['Y_init'] := [op(results_matrix['Y_init']), initSolnArray['Ystar'][i_soln]];
+					results_matrix['init_stable'] := [op(results_matrix['init_stable']), initSolnArray['pointStable'][i_soln]];
+					results_matrix['cSoln'] := [op(results_matrix['cSoln']), initSolnArray['cSoln'][i_soln]];
+					results_matrix['H_final'] := [op(results_matrix['H_final']), finalSolnArray['Hfinal'][j_soln]];
+					results_matrix['Y_final'] := [op(results_matrix['Y_final']), finalSolnArray['Yfinal'][j_soln]];
+					results_matrix['Ii_final'] := [op(results_matrix['Ii_final']), finalSolnArray['Iifinal'][j_soln]];
+					results_matrix['Zi_final'] := [op(results_matrix['Zi_final']), finalSolnArray['Zifinal'][j_soln]];
+					results_matrix['final_stable'] := [op(results_matrix['final_stable']), finalSolnArray['pointStable'][j_soln]];
+					if paramControlType = 9 and tradeCSSTest then 
+						results_matrix['thetaMod'] := [op(results_matrix['thetaMod']), evalf(theta)] 
+					elif paramControlType = 7 and tradeCSSTest then
+						results_matrix['zetaMod'] := [op(results_matrix['zetaMod']), evalf(Zeta)] 
+					end if 
+				end do 
+			end do;
+			progressCounter := 4 end proc		
+		
+##Runner
+	runner := proc () 
+		local 
+			exitcode; global j_control, control_values, control_j, j_skipStep, i_param_value, j_param_value, i_param_min, j_param_min, i_param_max, j_param_max, control_i, i_skipStep, i_control, progressCounter, 
+			`&theta;_max`, `&lambda;_r`, lambda, `&rho;_r`, `&rho;_i`, D_V, sigma, alpha, theta, p, `my_&zeta;`, D_T, `my_&gamma;`, `my_&gamma;r`, r, K, D_migrate, omega, `&eta;_&lambda;`, `&eta;_&gamma;`, `&eta;_&rho;`, kappa, phi, xi, 
+			error_matrix, j_analyticalNumPoints; 
+		
+		if j_paramControlType = paramControlType then 
+			j_analyticalNumPoints := 1 
+		end if; 
+		
+		for j_control to j_analyticalNumPoints do 
+			if 1 < j_analyticalNumPoints then 
+				control_values := seq(j_analyticalMinControl .. j_analyticalMaxControl, (j_analyticalMaxControl-j_analyticalMinControl)/(j_analyticalNumPoints-1)) 
+			else 
+				control_values := j_analyticalMaxControl 
+			end if; 
+			
+			control_j := control_values[j_control];
+				
+			j_skipStep := false;
+			if j_paramControlType = 1 then 
+				if model_isMutantSwitch then 
+					`&lambda;_r` := `&lambda;_min`+(`&lambda;_max`/`invader_&beta;Adv`-`&lambda;_min`)*control_j;
+					lambda := `&lambda;_min`*`invader_&beta;Adv`+(-`&lambda;_min`*`invader_&beta;Adv`+`&lambda;_max`)*control_j;
+					j_param_value := lambda;
+					j_param_min := `&lambda;_min`*`invader_&beta;Adv`;
+					j_param_max := `&lambda;_max` else lambda := `&lambda;_min`+(`&lambda;_max`-`&lambda;_min`)*control_j;
+					j_param_value := lambda;
+					j_param_min := `&lambda;_min`;
+					j_param_max := `&lambda;_max` 
+				end if 
+			elif j_paramControlType = 2 then 
+				if model_isMutantSwitch then 
+					`&rho;_r` := `&rho;_min`*`invader_&rho;Adv`+(-`&rho;_min`*`invader_&rho;Adv`+`&rho;_max`)*control_j;
+					`&rho;_i` := `&rho;_min`+(`&rho;_max`/`invader_&rho;Adv`-`&rho;_min`)*control_j;
+					j_param_value := `&rho;_i`;
+					j_param_max := `&rho;_max`/`invader_&rho;Adv`;
+					j_param_min := `&rho;_min` else `&rho;_i` := `&rho;_min`+(`&rho;_max`-`&rho;_min`)*control_j;
+					j_param_value := `&rho;_i`;
+					j_param_min := `&rho;_min`;
+					j_param_max;
+					`&rho;_max` 
+				end if 
+			elif j_paramControlType = 3 then 
+				if invader_dispAdv <> 1 then 
+					error "invader disp adv. not implemented." 
+				end if;
+				D_V := Dv_min+(Dv_max-Dv_min)*control_j;
+				j_param_value := D_V;
+				`j_param_min&Assign;`*Dv_min;
+				j_param_max := Dv_max 
+			elif j_paramControlType = 4 then 
+				sigma := `&sigma;_min`+(`&sigma;_max`-`&sigma;_min`)*control_j;
+				j_param_value := sigma;
+				j_param_min := `&sigma;_min`;
+				j_param_max := `&sigma;_max` 
+			elif j_paramControlType = 5 then  
+			elif j_paramControlType = 6 then 
+				alpha := `&alpha;_min`+(`&alpha;_max`-`&alpha;_min`)*control_j;
+				j_param_value := alpha;
+				j_param_min := `&alpha;_min`;
+				j_param_max := `&alpha;_max` 
+			elif j_paramControlType = 7 then 
+				theta := `&theta;_min`+(`&theta;_max`-`&theta;_min`)*control_j;
+				j_param_value := theta;
+				j_param_min := `&theta;_min`;
+				j_param_max := `&theta;_max` 
+			elif j_paramControlType = 8 then 
+				p := p_min+(p_max-p_min)*control_j;
+				j_param_value := p;
+				j_param_min := p_min;
+				j_param_max := p_max 
+			elif j_paramControlType = 9 then 
+				`my_&zeta;` := `&zeta;_min`+(`&zeta;_max`-`&zeta;_min`)*control_j;
+				j_param_value := `my_&zeta;`;
+				j_param_min := `&zeta;_min`;
+				j_param_max := `&zeta;_max` 
+			elif j_paramControlType = 10 then 
+				D_T := Dt_min+(Dt_max-Dt_min)*control_j;
+				j_param_value := D_T;
+				j_param_min := Dt_min;
+				j_param_max := Dt_max 
+			elif j_paramControlType = 11 then 
+				if model_isMutantSwitch then 
+					`my_&gamma;r` := `&gamma;_min`+(`&gamma;_max`/`invader_&gamma;Adv`-`&gamma;_min`)*control_j;
+					`my_&gamma;` := `&gamma;_min`*`invader_&gamma;Adv`+(-`&gamma;_min`*`invader_&gamma;Adv`+`&gamma;_max`)*control_j;
+					j_param_value := `my_&gamma;`;
+					j_param_min := `&gamma;_min`*`invader_&gamma;Adv`;
+					j_param_max := `&gamma;_max` 
+				else 
+					`my_&gamma;` := `&gamma;_min`+(`&gamma;_max`-`&gamma;_min`)*control_j;
+					j_param_value := `my_&gamma;`;
+					j_param_min := `&gamma;_min`;
+					j_param_max := `&gamma;_max` 
+				end if 
+			elif j_paramControlType = 12 then 
+				r := r_min+(r_max-r_min)*control_j;
+				j_param_value := r;
+				j_param_min := r_min;
+				j_param_max := r_max 
+			elif j_paramControlType = 13 then 
+				K := K_min+(K_max-K_min)*control_j;
+				j_param_value := K;
+				j_param_min := K_min;
+				j_param_max := K_max 
+			elif j_paramControlType = 14 then 
+				D_migrate := D_min+(D_max-D_min)*control_j;
+				j_param_value := D_migrate;
+				j_param_min := D_min;
+				j_param_max := D_max 
+			elif j_paramControlType = 15 then 
+				omega := `&omega;_min`+(`&omega;_max`-`&omega;_min`)*control_j;
+				j_param_value := omega;
+				j_param_min := `&omega;_min`;
+				j_param_max := `&omega;_max` 
+			elif j_paramControlType = 16 then 
+				`&eta;_&lambda;` := `&eta;_min`+(`&eta;_max`-`&eta;_min`)*control_j;
+				j_param_value := `&eta;_&lambda;`;
+				j_param_min := `&eta;_min`;
+				j_param_max := `&eta;_max` 
+			elif j_paramControlType = 17 then 
+				`&eta;_&gamma;` := `&eta;_min`+(`&eta;_max`-`&eta;_min`)*control_j;
+				j_param_value := `&eta;_&lambda;`;
+				j_param_min := `&eta;_min`;
+				j_param_max := `&eta;_max` 
+			elif j_paramControlType = 18 then 
+				kappa := `&kappa;_min`+(`&kappa;_max`-`&kappa;_min`)*control_j;
+				j_param_value := kappa;
+				j_param_min := `&kappa;_min`;
+				j_param_max := `&kappa;_max` 
+			elif j_paramControlType = 19 then 
+				phi := `&phi;_min`+(`&phi;_max`-`&phi;_min`)*control_j;
+				j_param_value := phi;
+				j_param_min := `&phi;_min`;
+				j_param_max := `&phi;_max` 
+			elif j_paramControlType = 20 then 
+				xi := `&xi;_min`+(`&xi;_max`-`&xi;_min`)*control_j;
+				j_param_value := xi;
+				j_param_min := `&xi;_min`;
+				j_param_max := `&xi;_max` 
+			elif j_paramControlType = 21 then 
+				`&eta;_&rho;` := `&eta;_min`+(`&eta;_max`-`&eta;_min`)*control_j;
+				j_param_value := `&eta;_&rho;`;
+				j_param_min := `&eta;_min`;
+				j_param_max := `&eta;_max` 
+			else 
+				error "Invalid paramControlType - terminating" 
+			end if;
+			for i_control to i_analyticalNumPoints do control_values := seq(i_analyticalMinControl .. i_analyticalMaxControl, (i_analyticalMaxControl-i_analyticalMinControl)/(i_analyticalNumPoints-1));
+				control_i := control_values[i_control];
+				i_skipStep := false;
+				if paramControlType = 1 then 
+					if model_isMutantSwitch then 
+						if j_paramControlType <> 16 then 
+							`&lambda;_r` := `&lambda;_min`+(`&lambda;_max`/`invader_&beta;Adv`-`&lambda;_min`)*control_i;
+							lambda := `&lambda;_min`*`invader_&beta;Adv`+(-`&lambda;_min`*`invader_&beta;Adv`+`&lambda;_max`)*control_i;
+							i_param_value := lambda;
+							i_param_min := `&lambda;_min`*`invader_&beta;Adv`;
+							i_param_max := `&lambda;_max` 
+						else 
+							lambda := `&lambda;_min`+(`&lambda;_max`-`&lambda;_min`)*control_i;
+							`&lambda;_r` := lambda/`&eta;_&lambda;`;
+							i_param_value := lambda;
+							i_param_min := `&lambda;_min`;
+							i_param_max := `&lambda;_max` 
+						end if 
+					else 
+						lambda := `&lambda;_min`+(`&lambda;_max`-`&lambda;_min`)*control_i;
+						i_param_value := lambda;
+						i_param_min := `&lambda;_min`;
+						i_param_max := `&lambda;_max` 
+					end if 
+				elif paramControlType = 2 then 
+					if model_isMutantSwitch then 
+						`&rho;_r` := `&rho;_min`*`invader_&rho;Adv`+(-`&rho;_min`*`invader_&rho;Adv`+`&rho;_max`)*control_i;
+						`&rho;_i` := `&rho;_min`+(`&rho;_max`/`invader_&rho;Adv`-`&rho;_min`)*control_i;
+						i_param_value := `&rho;_i`;
+						i_param_max := `&rho;_max`/`invader_&rho;Adv`;
+						i_param_min := `&rho;_min`;
+						print("[rho_r, rho_i] = ", [`&rho;_r`, `&rho;_i`]) 
+					else 
+						`&rho;_i` := `&rho;_min`+(`&rho;_max`-`&rho;_min`)*control_i;
+						i_param_value := `&rho;_i`;
+						i_param_min := `&rho;_min`;
+						i_param_max;
+						`&rho;_max` 
+					end if 
+				elif paramControlType = 3 then 
+					if invader_dispAdv <> 1 then 
+						error "invader disp adv. not implemented." 
+					end if;
+					D_V := (Dv_min+(Dv_max-Dv_min)*control_i)/sqrt(2);
+					i_param_value := D_V;
+					i_param_min := Dv_min;
+					i_param_max := Dv_max 
+				elif paramControlType = 4 then 
+					sigma := `&sigma;_min`+(`&sigma;_max`-`&sigma;_min`)*control_i;
+					i_param_value := sigma;
+					i_param_min := `&sigma;_min`;
+					i_param_max := `&sigma;_max` 
+				elif paramControlType = 5 then  
+				elif paramControlType = 6 then 
+					alpha := `&alpha;_min`+(`&alpha;_max`-`&alpha;_min`)*control_i;
+					i_param_value := alpha;
+					i_param_min := `&alpha;_min`;
+					i_param_max := `&alpha;_max` 
+				elif paramControlType = 7 then 
+					theta := `&theta;_min`+(`&theta;_max`-`&theta;_min`)*control_i;
+					i_param_value := theta;
+					i_param_min := `&theta;_min`;
+					i_param_max := `&theta;_max`;
+					if tradeCSSTest then 
+						if j_paramControlType = 9 then 
+							error "Varying &zeta; as 2nd indie var with zeta/css test active" 
+						end if;
+						`&theta;_max` := 1-localProp;
+						theta := `&theta;_min`+(`&theta;_max`-`&theta;_min`)*control_i;
+						i_param_value := theta;
+						i_param_max := `&theta;_max`;
+						`my_&zeta;` := `&zeta;_var`(theta, localProp) 
+					end if 
+				elif paramControlType = 8 then 
+					p := p_min+(p_max-p_min)*control_i;
+					i_param_value := p;
+					i_param_min := p_min;
+					i_param_max := p_max 
+				elif paramControlType = 9 then 
+					`my_&zeta;` := `&zeta;_min`+(`&zeta;_max`-`&zeta;_min`)*control_i;
+					i_param_value := `my_&zeta;`;
+					i_param_min := `&zeta;_min`;
+					i_param_max := `&zeta;_max`;
+					if tradeCSSTest then 
+						if j_paramControlType = 7 then 
+							error "Varying  as 2nd indie var with zeta/CSS test active" 
+						end if;
+						error "Not fully implemented";
+						theta := `&theta;_var`(Zeta, localProp) 
+					end if 
+				elif paramControlType = 10 then 
+					D_T := Dt_min+(Dt_max-Dt_min)*control_i;
+					i_param_value := D_T;
+					i_param_min := Dt_min;
+					i_param_max := Dt_max 
+				elif paramControlType = 11 then 
+					if j_paramControlType <> 17 then 
+						`my_&gamma;r` := `&gamma;_min`+(`&gamma;_max`/`invader_&gamma;Adv`-`&gamma;_min`)*control_i;
+						`my_&gamma;` := `&gamma;_min`*`invader_&gamma;Adv`+(-`&gamma;_min`*`invader_&gamma;Adv`+`&gamma;_max`)*control_i;
+						i_param_value := `my_&gamma;`;
+						i_param_min := `&gamma;_min`*`invader_&gamma;Adv`;
+						i_param_max := `&gamma;_max` 
+					else 
+						`my_&gamma;` := `&gamma;_min`+(`&gamma;_max`-`&gamma;_min`)*control_i;
+						`my_&gamma;r` := `my_&gamma;`/`&eta;_&gamma;`;
+						i_param_value := `my_&gamma;`;
+						i_param_min := `&gamma;_min`;
+						i_param_max := `&gamma;_max` 
+					end if 
+				elif paramControlType = 12 then 
+					r := r_min+(r_max-r_min)*control_i;
+					i_param_value := r;
+					i_param_min := r_min;
+					i_param_max := r_max 
+				elif paramControlType = 13 then 
+					K := K_min+(K_max-K_min)*control_i;
+					i_param_value := K;
+					i_param_min := K_min;
+					i_param_max := K_max 
+				elif paramControlType = 14 then 
+					D_migrate := D_min+(D_max-D_min)*control_i;
+					i_param_value := D_migrate;
+					i_param_min := D_min;
+					i_param_max := D_max 
+				elif paramControlType = 15 then 
+					omega := `&omega;_min`+(`&omega;_max`-`&omega;_min`)*control_i;
+					i_param_value := omega;
+					i_param_min := `&omega;_min`;
+					i_param_max := `&omega;_max` 
+				elif paramControlType = 16 then 
+					`&eta;_&lambda;` := `&eta;_min`+(`&eta;_max`-`&eta;_min`)*control_i;
+					i_param_value := `&eta;_&lambda;`;
+					i_param_min := `&eta;_min`;
+					i_param_max := `&eta;_max`;
+					lambda := `&lambda;_r`*`&eta;_&lambda;` 
+				elif paramControlType = 17 then 
+					`&eta;_&gamma;` := `&eta;_min`+(`&eta;_max`-`&eta;_min`)*control_i;
+					i_param_value := `&eta;_&lambda;`;
+					i_param_min := `&eta;_min`;
+					i_param_max := `&eta;_max`;
+					error "Not Implemented" 
+				elif paramControlType = 18 then 
+					kappa := `&kappa;_min`+(`&kappa;_max`-`&kappa;_min`)*control_i;
+					i_param_value := kappa;
+					i_param_min := `&kappa;_min`;
+					i_param_max := `&kappa;_max` 
+				elif paramControlType = 19 then 
+					phi := `&phi;_min`+(`&phi;_max`-`&phi;_min`)*control_i;
+					i_param_value := phi;
+					i_param_min := `&phi;_min`;
+					i_param_max := `&phi;_max` 
+				elif paramControlType = 20 then 
+					xi := `&xi;_min`+(`&xi;_max`-`&xi;_min`)*control_i;
+					i_param_value := xi;
+					i_param_min := `&xi;_min`;
+					i_param_max := `&xi;_max` 
+				elif paramControlType = 21 then 
+					`&eta;_&rho;` := `&eta;_min`+(`&eta;_max`-`&eta;_min`)*control_i;
+					i_param_value := `&eta;_&rho;`;
+					i_param_min := `&eta;_min`;
+					i_param_max := `&eta;_max`;
+					`&rho;_i` := `&rho;_r`/`&eta;_&rho;` 
+				else 
+					error "Invalid paramControlType - terminating" 
+				end if;
+				print("paramControlType", [paramControlType, j_paramControlType]);
+				print("control%", [control_i, control_j]);
+				print("param_value", [i_param_value, j_param_value]);
+				progressCounter := 1;
+				try 
+					if model_isMutantSwitch then 
+						isInitialSolnBase := initial(true);
+						final(isInitialSolnBase);
+						speed() else isInitialSolnBase := initialMigrant(true);
+						finalMigrant(isInitialSolnBase);
+						exitcode := speedMigrant();
+						if evalb(exitcode = -1) then 
+							isInitialSolnBase := initialMigrant(true);
+							finalMigrant(isInitialSolnBase);
+							exitcode := speedMigrant() 
+						end if 
+					end if 
+				catch: 
+					error_matrix['paramControlType'] := [op(error_matrix['paramControlType']), paramControlType];
+					error_matrix['i_param_value'] := [op(error_matrix['i_param_value']), evalf(i_param_value)];
+					error_matrix['j_paramControlType'] := [op(error_matrix['j_paramControlType']), j_paramControlType];
+					error_matrix['j_param_value'] := [op(error_matrix['j_param_value']), evalf(j_param_value)];
+					error_matrix['progressCount'] := [op(error_matrix['progressCount']), progressCounter];
+					print("ERROR HAS OCCURED!", [paramControlType, i_param_value, j_paramControlType, j_param_value, progressCounter]);
+					lastexception 
+				end try 
+			end do 
+		end do 
+	end proc
+	
+##Writer
+	writer := proc () 
+		global 
+			xTitle_file, yTitle_file, initl_viableSolnMatrix, final_viableSolnMatrix, results_writeMatrix; 
+		
+		if paramControlType = 0 then xTitle_file := "None" 
+		elif paramControlType = 1 then xTitle_file := "lambda_i" 
+		elif paramControlType = 2 then xTitle_file := "rho_i" 
+		elif paramControlType = 3 then xTitle_file := "b_i" 
+		elif paramControlType = 4 then xTitle_file := "sigma" 
+		elif paramControlType = 5 then error "Invalid Param Selected" 
+		elif paramControlType = 6 then xTitle_file := "alpha" 
+		elif paramControlType = 7 then xTitle_file := "theta" 
+		elif paramControlType = 8 then xTitle_file := "p" 
+		elif paramControlType = 9 then xTitle_file := "zeta" 
+		elif paramControlType = 10 then xTitle_file := "b_zeta" 
+		elif paramControlType = 11 then xTitle_file := "gamma_i" 
+		elif paramControlType = 12 then xTitle_file := "r" 
+		elif paramControlType = 13 then xTitle_file := "K" 
+		elif paramControlType = 14 then xTitle_file := "D_migrate" 
+		elif paramControlType = 15 then xTitle_file := "omega" 
+		elif paramControlType = 16 then xTitle_file := "etaLambda" 
+		elif paramControlType = 17 then xTitle_file := "etaGamma" 
+		elif paramControlType = 18 then xTitle_file := "kappa" 
+		elif paramControlType = 19 then xTitle_file := "phi" 
+		elif paramControlType = 20 then xTitle_file := "xi" 
+		elif paramControlType = 21 then xTitle_file := "etaRho" 
+		else error "Invalid paramControlType - terminating" 
+		end if;
+		
+		if j_paramControlType = 0 then yTitle_file := "None" 
+		elif j_paramControlType = 1 then yTitle_file := "lambda_i" 
+		elif j_paramControlType = 2 then yTitle_file := "rho_i" 
+		elif j_paramControlType = 3 then yTitle_file := "b_i" 
+		elif j_paramControlType = 4 then yTitle_file := "sigma" 
+		elif j_paramControlType = 5 then error "Invalid Param Selected" 
+		elif j_paramControlType = 6 then yTitle_file := "alpha" 
+		elif j_paramControlType = 7 then yTitle_file := "theta" 
+		elif j_paramControlType = 8 then yTitle_file := "p" 
+		elif j_paramControlType = 9 then yTitle_file := "zeta" 
+		elif j_paramControlType = 10 then yTitle_file := "b_zeta" 
+		elif j_paramControlType = 11 then yTitle_file := "gamma_i" 
+		elif j_paramControlType = 12 then yTitle_file := "r" 
+		elif j_paramControlType = 13 then yTitle_file := "K" 
+		elif j_paramControlType = 14 then yTitle_file := "D_migrate" 
+		elif j_paramControlType = 15 then yTitle_file := "omega" 
+		elif j_paramControlType = 16 then yTitle_file := "etaLambda" 
+		elif j_paramControlType = 17 then yTitle_file := "etaGamma" 
+		elif j_paramControlType = 18 then yTitle_file := "kappa" 
+		elif j_paramControlType = 19 then yTitle_file := "phi" 
+		elif j_paramControlType = 20 then yTitle_file := "xi" 
+		elif j_paramControlType = 21 then yTitle_file := "etaRho" 
+		else error "Invalid paramControlType - terminating" 
+		end if;
+		
+		if model_isMutantSwitch then 
+			initl_viableSolnMatrix := Matrix([
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['i_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['j_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['Hstar'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['Ystar'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['Irstar'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['Zrstar'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['pointStable']))
+			]);
+			final_viableSolnMatrix := Matrix([
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['i_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['j_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Hfinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Yfinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Irfinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Zrfinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Iifinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Zifinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['pointStable']))
+			]);
+			results_writeMatrix := Matrix([
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['i_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['j_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['H_init'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Y_init'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Ir_init'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Zr_init'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['init_stable'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['cSoln'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['H_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Y_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Ir_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Zr_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Ii_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Zi_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['final_stable']))
+			]) 
+		else 
+			initl_viableSolnMatrix := Matrix([
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['i_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['j_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['Hstar'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['Ystar'])), 
+				LinearAlgebra:-Transpose(Vector[row](initl_viableSolnArray['pointStable']))
+			]);
+			final_viableSolnMatrix := Matrix([
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['i_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['j_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Hfinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Yfinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Iifinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['Zifinal'])), 
+				LinearAlgebra:-Transpose(Vector[row](final_viableSolnArray['pointStable']))
+			]);
+			results_writeMatrix := Matrix([
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['i_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['j_param'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['H_init'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Y_init'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['init_stable'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['cSoln'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['H_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Y_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Ii_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['Zi_final'])), 
+				LinearAlgebra:-Transpose(Vector[row](results_matrix['final_stable']))
+			]) 
+		end if;
+		
+		if paramControlType = 9 and tradeCSSTest then 
+			results_writeMatrix := Matrix([results_writeMatrix, LinearAlgebra:-Transpose(Vector[row](results_matrix['thetaMod']))]) 
+		elif paramControlType = 7 and tradeCSSTest then 
+			results_writeMatrix := Matrix([results_writeMatrix, LinearAlgebra:-Transpose(Vector[row](results_matrix['zetaMod']))]) 
+		end if;
+		
+		if writeDataSwitch then 
+			ExportMatrix(
+				cat(path, filenameInvaderType, advantageString, convert(advantageValue, string), rhoRepTitle, "-", xTitle_file, ",", yTitle_file, tradeFixTitle, "-", "MapleFDT_ResultsMatrix.csv"), 
+				results_writeMatrix, target = delimited, delimiter = ",");
+			ExportMatrix(
+				cat(path, filenameInvaderType, advantageString, convert(advantageValue, string), rhoRepTitle, "-", xTitle_file, ",", yTitle_file, tradeFixTitle, "-", "MapleFDT_InitialViableSolnsMatrix.csv"), 
+				initl_viableSolnMatrix, target = delimited, delimiter = ",");
+			ExportMatrix(
+				cat(path, filenameInvaderType, advantageString, convert(advantageValue, string), rhoRepTitle, "-", xTitle_file, ",", yTitle_file, tradeFixTitle, "-", "MapleFDT_FinalViableSolnsMatrix.csv"), 
+				final_viableSolnMatrix, target = delimited, delimiter = ",") 
+		end if 
+	end proc
+
+##Main
+	Digits := 16;
+	with(ListTools);
+	with(LinearAlgebra);
+	error_matrix := Record('paramControlType' = [], 'i_param_value' = [], 'j_paramControlType' = [], 'j_param_value' = [], 'progressCount' = []);
+	path := "C:/";
+	coreNum := 1;
+	paramCombs := [];
+	paramCombs := [op(paramCombs), [1, 1]];
+	paramCombs := [op(paramCombs), [2, 2]];
+	paramCombs := [op(paramCombs), [4, 4]];
+	paramCombs := [op(paramCombs), [6, 6]];
+	paramCombs := [op(paramCombs), [7, 7]];
+	paramCombs := [op(paramCombs), [8, 8]];
+	paramCombs := [op(paramCombs), [9, 9]];
+	paramCombs := [op(paramCombs), [10, 10]];
+	paramCombs := [op(paramCombs), [11, 11]];
+	paramCombs := [op(paramCombs), [9, 7]];
+	for paramCombNum to numelems(paramCombs) do 
+		paramControlType := paramCombs[paramCombNum][1];
+		j_paramControlType := paramCombs[paramCombNum][2];
+		model_isMutantSwitch := true;
+		`&psi;_temp` := 0;
+		definitions();
+		theta := `&theta;_temp`;
+		p := p_temp;
+		`my_&zeta;` := `my_&zeta;_temp`;
+		sigma := `&sigma;_temp`;
+		omega := `&omega;_temp`;
+		`&rho;_r` := `&rho;_r_temp`;
+		`&rho;_i` := `&rho;_i_temp`;
+		`&lambda;_r` := `&lambda;_r_temp`;
+		lambda := `&lambda;_temp`;
+		alpha := `&alpha;_temp`;
+		tau := `&tau;_temp`;
+		`my_&gamma;r` := `my_&gamma;r_temp`;
+		`my_&gamma;` := `my_&gamma;_temp`;
+		r := r_temp;
+		K := K_temp;
+		D_migrate := D_migrate_temp;
+		`&eta;_&lambda;` := `invader_&beta;Adv`;
+		`&eta;_&gamma;` := `invader_&gamma;Adv`;
+		`&eta;_&rho;` := 1;
+		D_V := D_V_temp;
+		D_T := D_T_temp;
+		psi := `&psi;_temp`;
+		phi := `&phi;_temp`;
+		kappa := `&kappa;_temp`;
+		xi := `&xi;_temp`;
+		if psi > 0 then 
+			rhoRepTitle := "_RogueAndReplace" 
+		else 
+			rhoRepTitle := "" 
+		end if;
+		if paramCombNum > 1 then 
+			printf("Time taken to execute: %g seconds\n\n", time[real]()-st2);
+			st2 := time[real]() 
+		end if;
+		if model_isMutantSwitch then 
+			initl_viableSolnArray := Record('Hstar' = [], 'Irstar' = [], 'Ystar' = [], 'Zrstar' = [], 'pointStable' = [], 'i_param' = [], 'j_param' = []);
+			final_viableSolnArray := Record('Hfinal' = [], 'Irfinal' = [], 'Iifinal' = [], 'Yfinal' = [], 'Zrfinal' = [], 'Zifinal' = [], 'pointStable' = [], 'i_param' = [], 'j_param' = []);
+			if paramControlType = 9 and tradeCSSTest then 
+				results_matrix := Record(
+					'i_param' = [], 'j_param' = [], 
+					'H_init' = [], 'Y_init' = [], 'Ir_init' = [], 'Zr_init' = [], 
+					'init_stable' = [], 'cSoln' = [], 
+					'H_final' = [], 'Y_final' = [], 'Ir_final' = [], 'Ii_final' = [], 'Zr_final' = [], 'Zi_final' = [], 
+					'final_stable' = [], 'thetaMod' = []
+				) 
+			elif paramControlType = 7 and tradeCSSTest then 
+				results_matrix := Record(
+					'i_param' = [], 'j_param' = [], 
+					'H_init' = [], 'Y_init' = [], 'Ir_init' = [], 'Zr_init' = [], 
+					'init_stable' = [], 'cSoln' = [], 
+					'H_final' = [], 'Y_final' = [], 'Ir_final' = [], 'Ii_final' = [], 'Zr_final' = [], 'Zi_final' = [], 
+					'final_stable' = [], 'zetaMod' = []
+				) 
+			else 
+				results_matrix := Record(
+					'i_param' = [], 'j_param' = [], 
+					'H_init' = [], 'Y_init' = [], 'Ir_init' = [], 'Zr_init' = [], 
+					'init_stable' = [], 'cSoln' = [], 
+					'H_final' = [], 'Y_final' = [], 'Ir_final' = [], 'Ii_final' = [], 'Zr_final' = [], 'Zi_final' = [], 
+					'final_stable' = []
+				) 
+			end if 
+		else 
+			initl_viableSolnArray := Record('Hstar' = [], 'Ystar' = [], 'pointStable' = [], 'i_param' = [], 'j_param' = []);
+			final_viableSolnArray := Record('Hfinal' = [], 'Iifinal' = [], 'Yfinal' = [], 'Zifinal' = [], 'pointStable' = [], 'i_param' = [], 'j_param' = []);
+			if paramControlType = 9 and tradeCSSTest then 
+				results_matrix := Record('i_param' = [], 'j_param' = [], 'H_init' = [], 'Y_init' = [], 'init_stable' = [], 'cSoln' = [], 'H_final' = [], 'Y_final' = [], 'Ii_final' = [], 'Zi_final' = [], 'final_stable' = [], 'thetaMod' = []) 
+			elif paramControlType = 7 and tradeCSSTest then 
+				results_matrix := Record('i_param' = [], 'j_param' = [], 'H_init' = [], 'Y_init' = [], 'init_stable' = [], 'cSoln' = [], 'H_final' = [], 'Y_final' = [], 'Ii_final' = [], 'Zi_final' = [], 'final_stable' = [], 'zetaMod' = []) 
+			else 
+				results_matrix := Record('i_param' = [], 'j_param' = [], 'H_init' = [], 'Y_init' = [], 'init_stable' = [], 'cSoln' = [], 'H_final' = [], 'Y_final' = [], 'Ii_final' = [], 'Zi_final' = [], 'final_stable' = []) 
+			end if 
+		end if;
+		runner();
+		writer() 
+	end do;
+	errorMatrix := Matrix([
+		LinearAlgebra:-Transpose(Vector[row](error_matrix['paramControlType'])), 
+		LinearAlgebra:-Transpose(Vector[row](error_matrix['i_param_value'])), 
+		LinearAlgebra:-Transpose(Vector[row](error_matrix['j_paramControlType'])), 
+		LinearAlgebra:-Transpose(Vector[row](error_matrix['j_param_value'])), 
+		LinearAlgebra:-Transpose(Vector[row](error_matrix['progressCount']))
+	]);
+	ExportMatrix(
+		cat(path, filenameInvaderType, advantageString, convert(advantageValue, string), rhoRepTitle, "-", "CoreNum=", convert(coreNum, string), "-", "Maple_errorMatrix.csv"), 
+		errorMatrix, target = delimited, delimiter = ",");
+	printf("Time taken to execute: %g seconds\n\n", time[real]()-st)	
